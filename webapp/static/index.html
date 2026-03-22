@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF Booklet – Impozytor Broszurowy</title>
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- PDF.js (Mozilla) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+
+    <style>
+        /* ── Base ─────────────────────────────────────────────────── */
+        body {
+            background: #0b0b16;
+            color: #e2e8f0;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        /* ── Scrollbars ───────────────────────────────────────────── */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0b0b16;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 3px;
+        }
+
+        /* ── Cards ────────────────────────────────────────────────── */
+        .card {
+            background: #13131f;
+            border: 1px solid #1e1e38;
+            border-radius: 1rem;
+        }
+
+        .card-header {
+            padding: 0.875rem 1.25rem;
+            border-bottom: 1px solid #1e1e38;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header h3 {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #6b7280;
+        }
+
+        /* ── Drop Zone ────────────────────────────────────────────── */
+        #dropZone {
+            border: 2px dashed #2a2a4a;
+            border-radius: 0.875rem;
+            padding: 2.5rem 1.5rem;
+            cursor: pointer;
+            text-align: center;
+            transition: border-color .2s, background .2s;
+            position: relative;
+        }
+
+        #dropZone:hover,
+        #dropZone.drag-over {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, .04);
+        }
+
+        #dropZone.drag-over {
+            border-style: solid;
+        }
+
+        /* ── Toggle ───────────────────────────────────────────────── */
+        .toggle-track {
+            width: 2.75rem;
+            height: 1.5rem;
+            border-radius: 9999px;
+            position: relative;
+            cursor: pointer;
+            transition: background .2s;
+            background: #2d2d4a;
+        }
+
+        .toggle-track.on {
+            background: #6366f1;
+        }
+
+        .toggle-thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 1.125rem;
+            height: 1.125rem;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform .2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+        }
+
+        .toggle-track.on .toggle-thumb {
+            transform: translateX(1.25rem);
+        }
+
+        /* ── Option buttons ───────────────────────────────────────── */
+        .opt-btn {
+            padding: .375rem 0;
+            border-radius: .5rem;
+            border: 1.5px solid #1e1e38;
+            background: #0f0f1e;
+            color: #9ca3af;
+            font-size: .8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: border-color .15s, background .15s, color .15s;
+        }
+
+        .opt-btn:hover {
+            border-color: #4f46e5;
+            color: #c7d2fe;
+        }
+
+        .opt-btn.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, .12);
+            color: #a5b4fc;
+        }
+
+        .flip-btn {
+            padding: .625rem;
+            border-radius: .625rem;
+            border: 1.5px solid #1e1e38;
+            background: #0f0f1e;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+            text-align: center;
+        }
+
+        .flip-btn:hover {
+            border-color: #4f46e5;
+        }
+
+        .flip-btn.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, .1);
+        }
+
+        /* ── Primary button ───────────────────────────────────────── */
+        #processBtn {
+            width: 100%;
+            padding: .875rem;
+            border-radius: .75rem;
+            font-weight: 600;
+            font-size: .95rem;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            transition: opacity .2s, transform .1s;
+        }
+
+        #processBtn:hover:not(:disabled) {
+            opacity: .9;
+            transform: translateY(-1px);
+        }
+
+        #processBtn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        #processBtn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── Spinner ──────────────────────────────────────────────── */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin .7s linear infinite;
+        }
+
+        /* ── Progress bar ─────────────────────────────────────────── */
+        @keyframes progress-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .6;
+            }
+        }
+
+        .progress-bar {
+            height: 3px;
+            border-radius: 9999px;
+            background: linear-gradient(90deg, #6366f1, #a78bfa);
+            transition: width .4s ease;
+        }
+
+        .progress-bar.indeterminate {
+            width: 60% !important;
+            animation: progress-pulse 1.2s ease-in-out infinite;
+        }
+
+        /* ── PDF canvas ───────────────────────────────────────────── */
+        .canvas-wrap {
+            overflow: auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .canvas-wrap canvas {
+            max-width: 100%;
+            border-radius: .5rem;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, .6);
+        }
+
+        /* ── Badges ───────────────────────────────────────────────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: .15rem .5rem;
+            border-radius: 9999px;
+            font-size: .7rem;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        /* ── Result stats ─────────────────────────────────────────── */
+        .stat-box {
+            padding: .75rem;
+            border-radius: .625rem;
+            background: #0f0f1e;
+            border: 1px solid #1e1e38;
+            text-align: center;
+        }
+
+        .stat-box .val {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-box .lbl {
+            font-size: .7rem;
+            color: #6b7280;
+            margin-top: .15rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+    <header style="background:#0f0f1e; border-bottom:1px solid #1e1e38; padding:.875rem 1.5rem;"
+        class="flex items-center gap-3">
+        <div style="width:2.25rem;height:2.25rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+              border-radius:.625rem;display:flex;align-items:center;justify-content:center;">
+            <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"
+                stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="8" y1="13" x2="16" y2="13" />
+                <line x1="8" y1="17" x2="16" y2="17" />
+            </svg>
+        </div>
+        <div>
+            <div style="font-size:1rem;font-weight:700;line-height:1;">PDF Booklet</div>
+            <div style="font-size:.7rem;color:#6b7280;margin-top:.15rem;">Impozytor broszurowy 2-up</div>
+        </div>
+        <div style="margin-left:auto;font-size:.7rem;color:#374151;
+              padding:.25rem .625rem;background:#13131f;border:1px solid #1e1e38;
+              border-radius:.375rem;">v1.0</div>
+    </header>
+
+    <!-- ═══ MAIN ══════════════════════════════════════════════════════════════ -->
+    <main style="max-width:1280px;margin:0 auto;padding:1.5rem;
+             display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;" id="mainGrid">
+
+        <!-- ══ LEFT COLUMN ══════════════════════════════════════════════════════ -->
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+
+            <!-- Drop Zone -->
+            <div id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" accept=".pdf" style="display:none">
+
+                <!-- idle state -->
+                <div id="stateIdle">
+                    <svg width="44" height="44" fill="none" stroke="#374151" stroke-width="1.4" stroke-linecap="round"
+                        stroke-linejoin="round" viewBox="0 0 24 24" style="margin:0 auto .875rem;">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <div style="font-weight:600;color:#9ca3af;margin-bottom:.375rem;">
+                        Przeciągnij PDF tutaj
+                    </div>
+                    <div style="font-size:.8rem;color:#4b5563;">lub kliknij, żeby wybrać plik</div>
+                </div>
+
+                <!-- file loaded state -->
+                <div id="stateFile" style="display:none;flex-direction:column;align-items:center;gap:.5rem;">
+                    <svg width="36" height="36" fill="none" stroke="#818cf8" stroke-width="1.6" stroke-linecap="round"
+                        stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <div id="fileNameEl" style="font-weight:600;color:#a5b4fc;font-size:.9rem;word-break:break-all;">
+                    </div>
+                    <div id="fileSizeEl" style="font-size:.75rem;color:#6b7280;"></div>
+                    <button id="clearBtn" style="margin-top:.25rem;font-size:.75rem;color:#ef4444;background:none;
+                       border:1px solid #3f1414;border-radius:.375rem;padding:.2rem .6rem;cursor:pointer;"
+                        onclick="clearFile(event)">✕ Usuń plik</button>
+                </div>
+            </div>
+
+            <!-- Info card (shows after file load) -->
+            <div id="infoCard" class="card" style="display:none;">
+                <div class="card-header">
+                    <h3>Informacje o pliku</h3>
+                    <div id="pdfBadge" class="badge" style="color:#a5b4fc;border-color:#312e81;
+             background:rgba(99,102,241,.1);">PDF</div>
+                </div>
+                <div style="padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:.625rem;">
+                    <div style="background:#0b0b16;border:1px solid #1e1e38;border-radius:.5rem;
+                    padding:.625rem .75rem;">
+                        <div style="font-size:.7rem;color:#6b7280;margin-bottom:.2rem;">Stron</div>
+                        <div id="infoPagesEl" style="font-size:1.25rem;font-weight:700;color:#e2e8f0;"></div>
+                    </div>
+                    <div style="background:#0b0b16;border:1px solid #1e1e38;border-radius:.5rem;
+                    padding:.625rem .75rem;">
+                        <div style="font-size:.7rem;color:#6b7280;margin-bottom:.2rem;">Format</div>
+                        <div id="infoFormatEl" style="font-size:1.1rem;font-weight:700;color:#e2e8f0;"></div>
+                    </div>
+                    <div style="background:#0b0b16;border:1px solid #1e1e38;border-radius:.5rem;
+                    padding:.625rem .75rem;">
+                        <div style="font-size:.7rem;color:#6b7280;margin-bottom:.2rem;">Wymiary</div>
+                        <div id="infoDimsEl" style="font-size:.8rem;font-weight:500;color:#9ca3af;"></div>
+                    </div>
+                    <div style="background:#0b0b16;border:1px solid #1e1e38;border-radius:.5rem;
+                    padding:.625rem .75rem;">
+                        <div style="font-size:.7rem;color:#6b7280;margin-bottom:.2rem;">Rozmiar</div>
+                        <div id="infoFileSizeEl" style="font-size:.8rem;font-weight:500;color:#9ca3af;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Options -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Ustawienia broszury</h3>
+                </div>
+                <div style="padding:1.125rem;display:flex;flex-direction:column;gap:1rem;">
+
+                    <!-- Divide size -->
+                    <div>
+                        <div style="font-size:.8rem;font-weight:500;color:#9ca3af;margin-bottom:.625rem;">
+                            Wielkość broszury
+                            <span style="color:#4b5563;font-weight:400;">(stron na broszurę)</span>
+                        </div>
+                        <div id="divideGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;"></div>
+                    </div>
+
+                    <!-- Flip type -->
+                    <div>
+                        <div style="font-size:.8rem;font-weight:500;color:#9ca3af;margin-bottom:.625rem;">
+                            Przerzucanie w dupleksie
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+                            <button class="flip-btn active" data-flip="short" onclick="setFlip('short')">
+                                <div style="font-size:.8rem;font-weight:600;">Krótka krawędź</div>
+                                <div style="font-size:.7rem;color:#6b7280;margin-top:.2rem;">zalecane</div>
+                            </button>
+                            <button class="flip-btn" data-flip="long" onclick="setFlip('long')">
+                                <div style="font-size:.8rem;font-weight:600;">Długa krawędź</div>
+                                <div style="font-size:.7rem;color:#6b7280;margin-top:.2rem;">niektóre drukarki</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Separator toggle -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:.75rem;background:#0b0b16;border:1px solid #1e1e38;border-radius:.625rem;">
+                        <div>
+                            <div style="font-size:.85rem;font-weight:500;color:#d1d5db;">
+                                Separator między broszurami
+                            </div>
+                            <div style="font-size:.7rem;color:#6b7280;margin-top:.15rem;">
+                                Pusta kartka ułatwiająca rozdzielenie
+                            </div>
+                        </div>
+                        <div class="toggle-track on" id="sepToggle" onclick="toggleSep()">
+                            <div class="toggle-thumb"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Process button -->
+            <button id="processBtn" disabled onclick="processFile()">
+                <svg id="btnIcon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M7 16a4 4 0 01-.88-7.9A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3-3 3" />
+                    <line x1="12" y1="10" x2="12" y2="21" />
+                </svg>
+                <span id="btnText">Wybierz plik PDF</span>
+            </button>
+
+            <!-- Progress bar -->
+            <div id="progressCard" class="card" style="display:none;overflow:hidden;">
+                <div style="padding:.875rem 1.125rem;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;
+                    margin-bottom:.625rem;">
+                        <div style="display:flex;align-items:center;gap:.5rem;">
+                            <svg class="spin" width="14" height="14" fill="none" stroke="#818cf8" stroke-width="2.5"
+                                viewBox="0 0 24 24">
+                                <path d="M21 12a9 9 0 11-6.219-8.56" stroke-linecap="round" />
+                            </svg>
+                            <span id="progressLabel" style="font-size:.8rem;color:#9ca3af;">Wysyłanie...</span>
+                        </div>
+                        <span id="progressPct" style="font-size:.75rem;color:#4f46e5;font-weight:600;">0%</span>
+                    </div>
+                    <div style="background:#0b0b16;border-radius:9999px;overflow:hidden;height:3px;">
+                        <div class="progress-bar" id="progressBar" style="width:0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result card -->
+            <div id="resultCard" class="card" style="display:none;border-color:#064e3b;">
+                <div class="card-header" style="border-color:#064e3b;">
+                    <h3 style="color:#34d399;">✓ Gotowe!</h3>
+                    <div class="badge" style="color:#34d399;border-color:#064e3b;
+             background:rgba(52,211,153,.08);">sukces</div>
+                </div>
+                <div style="padding:1rem;">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.625rem;
+                    margin-bottom:1rem;">
+                        <div class="stat-box">
+                            <div class="val" style="color:#e2e8f0;" id="rInPages">—</div>
+                            <div class="lbl">stron wejście</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="val" style="color:#818cf8;" id="rSheets">—</div>
+                            <div class="lbl">kartek do druku</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="val" style="color:#a78bfa;" id="rBooklets">—</div>
+                            <div class="lbl">broszur</div>
+                        </div>
+                    </div>
+
+                    <!-- Booklet breakdown -->
+                    <div id="rBreakdown" style="margin-bottom:1rem;font-size:.75rem;color:#6b7280;
+                                    display:flex;flex-wrap:wrap;gap:.375rem;"></div>
+
+                    <button onclick="downloadResult()" style="width:100%;padding:.75rem;border-radius:.625rem;font-weight:600;
+                       color:#fff;background:linear-gradient(135deg,#059669,#10b981);
+                       border:none;cursor:pointer;display:flex;align-items:center;
+                       justify-content:center;gap:.5rem;font-size:.9rem;
+                       transition:opacity .2s;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Pobierz broszurę PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error card -->
+            <div id="errorCard" class="card" style="display:none;border-color:#7f1d1d;">
+                <div style="padding:1rem;display:flex;gap:.75rem;align-items:flex-start;">
+                    <div style="font-size:1.1rem;color:#f87171;flex-shrink:0;">⚠</div>
+                    <div>
+                        <div style="font-size:.85rem;font-weight:600;color:#fca5a5;margin-bottom:.25rem;">Błąd</div>
+                        <div id="errorMsg" style="font-size:.8rem;color:#f87171;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ══ RIGHT COLUMN – Previews ═════════════════════════════════════════ -->
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+
+            <!-- Input PDF preview -->
+            <div class="card" style="flex:1;">
+                <div class="card-header">
+                    <h3>Podgląd – plik wejściowy</h3>
+                    <div id="inputNav" style="display:none;align-items:center;gap:.5rem;">
+                        <button onclick="changePage('input',-1)" style="padding:.2rem .5rem;border-radius:.375rem;
+                         background:#0f0f1e;border:1px solid #1e1e38;color:#9ca3af;
+                         cursor:pointer;font-size:.9rem;">‹</button>
+                        <span style="font-size:.75rem;color:#6b7280;">
+                            str. <span id="inCur">1</span> / <span id="inTotal">?</span>
+                        </span>
+                        <button onclick="changePage('input',1)" style="padding:.2rem .5rem;border-radius:.375rem;
+                         background:#0f0f1e;border:1px solid #1e1e38;color:#9ca3af;
+                         cursor:pointer;font-size:.9rem;">›</button>
+                    </div>
+                </div>
+                <div style="min-height:320px;display:flex;align-items:center;justify-content:center;">
+                    <div id="inputPlaceholder" style="text-align:center;color:#374151;padding:2rem;">
+                        <svg width="52" height="52" fill="none" stroke="currentColor" stroke-width="1"
+                            viewBox="0 0 24 24" style="margin:0 auto .75rem;opacity:.4;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586
+                     a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 8.414V19
+                     a2 2 0 01-2 2z" />
+                        </svg>
+                        <div style="font-size:.85rem;">Wgraj PDF, żeby zobaczyć podgląd</div>
+                    </div>
+                    <div id="inputCanvasWrap" class="canvas-wrap" style="display:none;width:100%;">
+                        <canvas id="inputCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output PDF preview (shown after processing) -->
+            <div id="outputPreviewCard" class="card" style="display:none;flex:1;">
+                <div class="card-header" style="border-color:#064e3b;">
+                    <h3 style="color:#34d399;">Podgląd – broszura (wynik)</h3>
+                    <div style="display:flex;align-items:center;gap:.5rem;">
+                        <button onclick="changePage('output',-1)" style="padding:.2rem .5rem;border-radius:.375rem;
+                         background:#0f0f1e;border:1px solid #1e1e38;color:#9ca3af;
+                         cursor:pointer;font-size:.9rem;">‹</button>
+                        <span style="font-size:.75rem;color:#6b7280;">
+                            str. <span id="outCur">1</span> / <span id="outTotal">?</span>
+                        </span>
+                        <button onclick="changePage('output',1)" style="padding:.2rem .5rem;border-radius:.375rem;
+                         background:#0f0f1e;border:1px solid #1e1e38;color:#9ca3af;
+                         cursor:pointer;font-size:.9rem;">›</button>
+                    </div>
+                </div>
+                <div style="min-height:320px;display:flex;align-items:center;justify-content:center;">
+                    <div id="outputCanvasWrap" class="canvas-wrap" style="width:100%;">
+                        <canvas id="outputCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ═══ RESPONSIVE ════════════════════════════════════════════════════════ -->
+    <style>
+        @media (max-width: 900px) {
+            #mainGrid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+
+    <!-- ═══ SCRIPT ════════════════════════════════════════════════════════════ -->
+    <script>
+        // ── PDF.js setup ──────────────────────────────────────────────────────────
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // ── State ─────────────────────────────────────────────────────────────────
+        const S = {
+            file: null,
+            docs: { input: null, output: null },
+            pages: { input: 0, output: 0 },
+            cur: { input: 1, output: 1 },
+            divide: 16,
+            flip: 'short',
+            sep: true,
+            resultBlob: null,
+            resultName: '',
+        };
+
+        // ── Divide buttons ────────────────────────────────────────────────────────
+        const SIZES = [4, 8, 12, 16, 20, 24, 28, 32];
+        (function buildDivide() {
+            const grid = document.getElementById('divideGrid');
+            SIZES.forEach(n => {
+                const b = document.createElement('button');
+                b.className = 'opt-btn' + (n === 16 ? ' active' : '');
+                b.textContent = n;
+                b.dataset.n = n;
+                b.onclick = () => {
+                    S.divide = n;
+                    document.querySelectorAll('#divideGrid .opt-btn')
+                        .forEach(x => x.classList.toggle('active', +x.dataset.n === n));
+                };
+                grid.appendChild(b);
+            });
+        })();
+
+        // ── Flip ──────────────────────────────────────────────────────────────────
+        function setFlip(val) {
+            S.flip = val;
+            document.querySelectorAll('.flip-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.flip === val);
+            });
+        }
+
+        // ── Separator toggle ──────────────────────────────────────────────────────
+        function toggleSep() {
+            S.sep = !S.sep;
+            document.getElementById('sepToggle').classList.toggle('on', S.sep);
+        }
+
+        // ── Drag & drop ───────────────────────────────────────────────────────────
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        document.getElementById('fileInput').addEventListener('change', e => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        // ── File handling ─────────────────────────────────────────────────────────
+        async function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showError('Plik musi być w formacie PDF'); return;
+            }
+            S.file = file;
+
+            // UI: show file state
+            document.getElementById('stateIdle').style.display = 'none';
+            const sf = document.getElementById('stateFile');
+            sf.style.display = 'flex';
+            document.getElementById('fileNameEl').textContent = file.name;
+            document.getElementById('fileSizeEl').textContent = fmtBytes(file.size);
+
+            // Enable process button
+            document.getElementById('processBtn').disabled = false;
+            document.getElementById('btnText').textContent = 'Generuj broszurę';
+
+            // Fetch PDF info from server
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const r = await fetch('/api/info', { method: 'POST', body: fd });
+                if (r.ok) {
+                    const info = await r.json();
+                    showInfoCard(info, file.size);
+                }
+            } catch (_) { /* non-critical */ }
+
+            // Render input preview via PDF.js (client-side, no server round-trip)
+            const ab = await file.arrayBuffer();
+            const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+            S.docs.input = doc;
+            S.pages.input = doc.numPages;
+            S.cur.input = 1;
+
+            document.getElementById('inTotal').textContent = doc.numPages;
+            document.getElementById('inCur').textContent = 1;
+            document.getElementById('inputNav').style.display = 'flex';
+            document.getElementById('inputPlaceholder').style.display = 'none';
+            document.getElementById('inputCanvasWrap').style.display = 'block';
+
+            await renderPage('input', 1);
+            hideError();
+        }
+
+        function showInfoCard(info, fileSize) {
+            document.getElementById('infoPagesEl').textContent = info.total_pages;
+            document.getElementById('infoFormatEl').textContent = info.size_name;
+            document.getElementById('infoDimsEl').textContent = `${info.page_w} × ${info.page_h} pt`;
+            document.getElementById('infoFileSizeEl').textContent = fmtBytes(fileSize);
+            document.getElementById('infoCard').style.display = 'block';
+        }
+
+        function clearFile(e) {
+            e.stopPropagation();
+            S.file = null;
+            S.docs.input = null;
+
+            document.getElementById('stateFile').style.display = 'none';
+            document.getElementById('stateIdle').style.display = 'block';
+            document.getElementById('fileInput').value = '';
+
+            document.getElementById('infoCard').style.display = 'none';
+            document.getElementById('inputNav').style.display = 'none';
+            document.getElementById('inputCanvasWrap').style.display = 'none';
+            document.getElementById('inputPlaceholder').style.display = 'flex';
+
+            document.getElementById('processBtn').disabled = true;
+            document.getElementById('btnText').textContent = 'Wybierz plik PDF';
+
+            hideResultCard();
+            hideError();
+        }
+
+        // ── PDF rendering ─────────────────────────────────────────────────────────
+        async function renderPage(which, pageNum) {
+            const doc = S.docs[which];
+            if (!doc) return;
+            const canvasId = which === 'input' ? 'inputCanvas' : 'outputCanvas';
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            const page = await doc.getPage(pageNum);
+            const vp0 = page.getViewport({ scale: 1 });
+            const wrap = canvas.parentElement;
+            const maxW = (wrap.offsetWidth || 520) - 28;
+            const scale = Math.min(1.8, maxW / vp0.width);
+            const vp = page.getViewport({ scale });
+
+            canvas.width = vp.width;
+            canvas.height = vp.height;
+
+            await page.render({ canvasContext: ctx, viewport: vp }).promise;
+            S.cur[which] = pageNum;
+
+            const idCur = which === 'input' ? 'inCur' : 'outCur';
+            document.getElementById(idCur).textContent = pageNum;
+        }
+
+        async function changePage(which, delta) {
+            const next = S.cur[which] + delta;
+            if (next < 1 || next > S.pages[which]) return;
+            await renderPage(which, next);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', async e => {
+            if (e.target.tagName === 'INPUT') return;
+            if (e.key === 'ArrowLeft') await changePage('input', -1);
+            if (e.key === 'ArrowRight') await changePage('input', 1);
+        });
+
+        // ── Process ───────────────────────────────────────────────────────────────
+        async function processFile() {
+            if (!S.file) return;
+
+            hideError();
+            hideResultCard();
+            setProgress(5, 'Wysyłanie pliku...');
+            showEl('progressCard');
+
+            const btn = document.getElementById('processBtn');
+            btn.disabled = true;
+            document.getElementById('btnText').textContent = 'Przetwarzanie...';
+            const icon = document.getElementById('btnIcon');
+            icon.classList.add('spin');
+
+            try {
+                const fd = new FormData();
+                fd.append('file', S.file);
+                fd.append('divide', String(S.divide));
+                fd.append('separator', S.sep ? 'true' : 'false');
+                fd.append('flip', S.flip);
+
+                setProgress(25, 'Wysyłanie pliku...');
+
+                const resp = await fetch('/api/process', { method: 'POST', body: fd });
+                setProgress(70, 'Przetwarzanie impozycji...');
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+                    throw new Error(err.detail || `HTTP ${resp.status}`);
+                }
+
+                const blob = await resp.blob();
+                setProgress(95, 'Finalizowanie...');
+
+                S.resultBlob = blob;
+                S.resultName = (S.file.name.replace(/\.pdf$/i, '')) + '_booklet.pdf';
+
+                // Read stats from response headers
+                const inPages = resp.headers.get('X-Input-Pages') || '?';
+                const outSheets = resp.headers.get('X-Output-Sheets') || '?';
+                const nBooks = resp.headers.get('X-Booklets-Count') || '?';
+                const padding = resp.headers.get('X-Padding') || '0';
+
+                showResultCard(inPages, outSheets, nBooks, padding);
+
+                // Load output preview
+                setProgress(98, 'Ładowanie podglądu...');
+                await loadOutputPreview(blob);
+                setProgress(100, 'Gotowe!');
+
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                btn.disabled = false;
+                document.getElementById('btnText').textContent = 'Generuj broszurę';
+                icon.classList.remove('spin');
+                setTimeout(() => hideEl('progressCard'), 800);
+            }
+        }
+
+        async function loadOutputPreview(blob) {
+            const ab = await blob.arrayBuffer();
+            const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+            S.docs.output = doc;
+            S.pages.output = doc.numPages;
+            S.cur.output = 1;
+
+            document.getElementById('outTotal').textContent = doc.numPages;
+            document.getElementById('outCur').textContent = 1;
+            showEl('outputPreviewCard');
+            await renderPage('output', 1);
+        }
+
+        // ── Download ──────────────────────────────────────────────────────────────
+        function downloadResult() {
+            if (!S.resultBlob) return;
+            const url = URL.createObjectURL(S.resultBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = S.resultName;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 15000);
+        }
+
+        // ── UI helpers ────────────────────────────────────────────────────────────
+        function setProgress(pct, label) {
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('progressPct').textContent = pct + '%';
+            document.getElementById('progressLabel').textContent = label;
+        }
+
+        function showResultCard(inPages, outSheets, nBooks, padding) {
+            document.getElementById('rInPages').textContent = inPages;
+            document.getElementById('rSheets').textContent = outSheets;
+            document.getElementById('rBooklets').textContent = nBooks;
+
+            const bd = document.getElementById('rBreakdown');
+            const pills = [];
+            if (+padding > 0)
+                pills.push(`<span style="color:#f59e0b;">+${padding} pustych stron (dopełnienie)</span>`);
+            bd.innerHTML = pills.join('');
+
+            showEl('resultCard');
+        }
+        function hideResultCard() {
+            hideEl('resultCard');
+            hideEl('outputPreviewCard');
+            S.resultBlob = null;
+        }
+
+        function showError(msg) {
+            document.getElementById('errorMsg').textContent = msg;
+            showEl('errorCard');
+        }
+        function hideError() { hideEl('errorCard'); }
+
+        function showEl(id) { document.getElementById(id).style.display = 'block'; }
+        function hideEl(id) { document.getElementById(id).style.display = 'none'; }
+
+        function fmtBytes(b) {
+            if (b < 1024) return b + ' B';
+            if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+            return (b / 1048576).toFixed(1) + ' MB';
+        }
+    </script>
+</body>
+
+</html>
