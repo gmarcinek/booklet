@@ -1,0 +1,38 @@
+/* ── Base ─────────────────────────────────────────────────── */
+body {
+    background: #0b0b16;
+    color: #e2e8f0;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ── Scrollbars ───────────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0b0b16;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4f46e5;
+    border-radius: 3px;
+}
+
+/* ── Keyframes ────────────────────────────────────────────── */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes progress-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .6; }
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 900px) {
+    #mainGrid {
+        grid-template-columns: 1fr !important;
+    }
+}

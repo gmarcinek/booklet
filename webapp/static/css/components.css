@@ -1,0 +1,404 @@
+/* ── Cards ────────────────────────────────────────────────── */
+.card {
+    background: #13131f;
+    border: 1px solid #1e1e38;
+    border-radius: 1rem;
+}
+
+.card-header {
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid #1e1e38;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-header h3 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+/* ── Drop Zone ────────────────────────────────────────────── */
+#dropZone {
+    border: 2px dashed #2a2a4a;
+    border-radius: 0.875rem;
+    padding: 2.5rem 1.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .2s, background .2s;
+    position: relative;
+}
+
+#dropZone:hover,
+#dropZone.drag-over {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, .04);
+}
+
+#dropZone.drag-over {
+    border-style: solid;
+}
+
+/* ── Toggle ───────────────────────────────────────────────── */
+.toggle-track {
+    width: 2.75rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    position: relative;
+    cursor: pointer;
+    transition: background .2s;
+    background: #2d2d4a;
+}
+
+.toggle-track.on {
+    background: #6366f1;
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform .2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+.toggle-track.on .toggle-thumb {
+    transform: translateX(1.25rem);
+}
+
+/* ── Option buttons ───────────────────────────────────────── */
+.opt-btn {
+    padding: .375rem 0;
+    border-radius: .5rem;
+    border: 1.5px solid #1e1e38;
+    background: #0f0f1e;
+    color: #9ca3af;
+    font-size: .8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, color .15s;
+}
+
+.opt-btn:hover {
+    border-color: #4f46e5;
+    color: #c7d2fe;
+}
+
+.opt-btn.active {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, .12);
+    color: #a5b4fc;
+}
+
+.flip-btn {
+    padding: .625rem;
+    border-radius: .625rem;
+    border: 1.5px solid #1e1e38;
+    background: #0f0f1e;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-align: center;
+}
+
+.flip-btn:hover  { border-color: #4f46e5; }
+.flip-btn.active {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, .1);
+}
+
+/* ── Primary button ───────────────────────────────────────── */
+#processBtn {
+    width: 100%;
+    padding: .875rem;
+    border-radius: .75rem;
+    font-weight: 600;
+    font-size: .95rem;
+    color: #fff;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    transition: opacity .2s, transform .1s;
+}
+
+#processBtn:hover:not(:disabled) {
+    opacity: .9;
+    transform: translateY(-1px);
+}
+
+#processBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+#processBtn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── Spinner ──────────────────────────────────────────────── */
+.spin {
+    animation: spin .7s linear infinite;
+}
+
+/* ── Progress bar ─────────────────────────────────────────── */
+.progress-bar {
+    height: 3px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #6366f1, #a78bfa);
+    transition: width .4s ease;
+}
+
+.progress-bar.indeterminate {
+    width: 60% !important;
+    animation: progress-pulse 1.2s ease-in-out infinite;
+}
+
+/* ── PDF canvas ───────────────────────────────────────────── */
+.canvas-wrap {
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.canvas-wrap canvas {
+    max-width: 100%;
+    border-radius: .5rem;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, .6);
+}
+
+/* ── Badges ───────────────────────────────────────────────── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .15rem .5rem;
+    border-radius: 9999px;
+    font-size: .7rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+/* ── Result stats ─────────────────────────────────────────── */
+.stat-box {
+    padding: .75rem;
+    border-radius: .625rem;
+    background: #0f0f1e;
+    border: 1px solid #1e1e38;
+    text-align: center;
+}
+
+.stat-box .val {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-box .lbl {
+    font-size: .7rem;
+    color: #6b7280;
+    margin-top: .15rem;
+}
+
+/* ── Explanation Banner ───────────────────────────────────── */
+.expl-banner {
+    background: #13131f;
+    border: 1px solid #1e1e38;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.expl-img-wrap {
+    width: 100%;
+    min-height: 160px;
+    background: #0b0b16;
+    border-bottom: 1px solid #1e1e38;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.expl-img-wrap img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+/* placeholder shown while img src is empty */
+.expl-img-wrap img[src=""] {
+    display: none;
+}
+
+.expl-img-placeholder-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: .5rem;
+    color: #374151;
+    font-size: .8rem;
+    letter-spacing: .04em;
+    pointer-events: none;
+}
+
+.expl-img-placeholder-label svg {
+    opacity: .3;
+}
+
+.expl-content {
+    padding: 1.25rem 1.5rem;
+}
+
+.expl-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 0 0 .625rem;
+}
+
+.expl-text {
+    font-size: .875rem;
+    color: #9ca3af;
+    line-height: 1.65;
+    margin: 0 0 .5rem;
+}
+
+.expl-text:last-child {
+    margin-bottom: 0;
+}
+
+.expl-text strong {
+    color: #c7d2fe;
+    font-weight: 600;
+}
+
+.expl-text em {
+    color: #a5b4fc;
+    font-style: normal;
+}
+
+/* ── FAQ Button (header) ──────────────────────────────────── */
+.faq-btn {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .375rem .75rem;
+    border-radius: .5rem;
+    border: 1px solid #4f46e5;
+    background: #4f46e5;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    white-space: nowrap;
+}
+.faq-btn:hover { background: #4338ca; border-color: #4338ca; }
+
+/* ── FAQ Overlay ──────────────────────────────────────────── */
+.faq-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .6);
+    z-index: 100;
+    backdrop-filter: blur(2px);
+}
+.faq-overlay.active { display: block; }
+
+/* ── FAQ Drawer ───────────────────────────────────────────── */
+.faq-drawer {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: clamp(280px, 33vw, 100vw);
+    background: #13131f;
+    border-left: 1px solid #1e1e38;
+    z-index: 101;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+}
+.faq-drawer.active { transform: translateX(0); }
+
+.faq-close-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #1e1e38;
+    position: sticky;
+    top: 0;
+    background: #13131f;
+    z-index: 1;
+}
+.faq-drawer-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+.faq-close-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: .25rem;
+    border-radius: .375rem;
+    line-height: 1;
+    transition: color .15s;
+}
+.faq-close-btn:hover { color: #e2e8f0; }
+
+.faq-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+.faq-section {
+    display: flex;
+    flex-direction: column;
+    gap: .625rem;
+}
+.faq-section--last { padding-bottom: 2rem; }
+
+.faq-h3 {
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #818cf8;
+    margin: 0;
+}
+.faq-section p {
+    font-size: .875rem;
+    color: #9ca3af;
+    line-height: 1.7;
+    margin: 0;
+}
+.faq-section strong { color: #c7d2fe; font-weight: 600; }
+.faq-section em { color: #a5b4fc; font-style: normal; }
+
+.faq-list {
+    font-size: .875rem;
+    color: #9ca3af;
+    line-height: 1.7;
+    padding-left: 1.25rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .375rem;
+}
+.faq-list--ol { list-style: decimal; }
