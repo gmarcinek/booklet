@@ -124,7 +124,7 @@ def compose_2up_page(
         if right_page is not None:
             new_page.merge_transformed_page(
                 right_page,
-                Transformation().translate(float(half_w), 0).scale(scale, scale),
+                Transformation().scale(scale, scale).translate(float(half_w), 0),
             )
     else:
         if right_page is not None:
